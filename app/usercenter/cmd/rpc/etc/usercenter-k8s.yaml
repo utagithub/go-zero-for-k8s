@@ -1,0 +1,26 @@
+Name: usercenter-rpc
+ListenOn: 0.0.0.0:8989
+Mode: dev
+
+#jwtAuth
+JwtAuth:
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 31536000
+
+Log:
+  ServiceName: usercenter-rpc
+  Level: info
+  Mode: file
+  Path: logs
+
+Redis:
+  Host: 172.32.0.5:6379
+  Type: node
+  Pass: G62m50oigInC30sf
+  Key: usercenter-rpc
+DB:
+  DataSource: root:PXDN93VRKUm8TeE7@tcp(172.32.0.3:3306)/goods?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+Cache:
+  - Host: 172.32.0.5:6379
+    Pass: G62m50oigInC30sf
+
