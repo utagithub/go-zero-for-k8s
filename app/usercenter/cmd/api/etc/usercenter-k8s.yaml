@@ -11,7 +11,7 @@ Log:
   ServiceName: usercenter-api
   Level: info
   Mode: file
-  Path: logs
+  Path: ../../../../logs
 
 #WxMiniConf
 WxMiniConf:

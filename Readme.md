@@ -1,3 +1,8 @@
+## 系统架构图
+
+![jiagou](./deploy/image/pro.png)
+
+
 ## 一.项目启动
 
 
@@ -23,99 +28,8 @@
 ```
 ###### 新建usercenter.api文件,添加如下内容
 ```bash
-syntax = "v1"
-
-info (
-	title: "用户实例"
-	desc:  "用户实例"
-)
-
-type User {
-	Id       int64  `json:"id"`
-	Mobile   string `json:"mobile"`
-	Nickname string `json:"nickname"`
-	Sex      int64  `json:"sex"`
-	Avatar   string `json:"avatar"`
-	Info     string `json:"info"`
-}
-
-type (
-	RegisterReq {
-		Mobile   string `json:"mobile"`
-		Password string `json:"password"`
-	}
-	RegisterResp {
-		AccessToken  string `json:"accessToken"`
-		AccessExpire int64  `json:"accessExpire"`
-		RefreshAfter int64  `json:"refreshAfter"`
-	}
-)
-
-type (
-	LoginReq {
-		Mobile   string `json:"mobile"`
-		Password string `json:"password"`
-	}
-	LoginResp {
-		AccessToken  string `json:"accessToken"`
-		AccessExpire int64  `json:"accessExpire"`
-		RefreshAfter int64  `json:"refreshAfter"`
-	}
-)
-
-type (
-	WXMiniAuthReq {
-		Code          string `json:"code"`
-		IV            string `json:"iv"`
-		EncryptedData string `json:"encryptedData"`
-	}
-	WXMiniAuthResp {
-		AccessToken  string `json:"accessToken"`
-		AccessExpire int64  `json:"accessExpire"`
-		RefreshAfter int64  `json:"refreshAfter"`
-	}
-)
-
-type (
-	UserInfoReq  {}
-	UserInfoResp {
-		UserInfo User `json:"userInfo"`
-	}
-)
-
-//============================> usercenter v1 <============================
-//no need login
-@server (
-	prefix: usercenter/v1
-	group:  user
-)
-service usercenter {
-	@doc "register"
-	@handler register
-	post /user/register (RegisterReq) returns (RegisterResp)
-
-	@doc "login"
-	@handler login
-	post /user/login (LoginReq) returns (LoginResp)
-}
-
-//need login
-@server (
-	prefix: usercenter/v1
-	group:  user
-	jwt:    JwtAuth
-)
-service usercenter {
-	@doc "get user info"
-	@handler detail
-	post /user/detail (UserInfoReq) returns (UserInfoResp)
-
-	@doc "wechat mini auth"
-	@handler wxMiniAuth
-	post /user/wxMiniAuth (WXMiniAuthReq) returns (WXMiniAuthResp)
-}
-
-
+  # 详见下面文件
+  # go-zero-for-k8s/app/usercenter/cmd/api/desc/usercenter.api
 ```
 ###### 执行以下命令完善API服务
 ```bash
@@ -135,105 +49,15 @@ service usercenter {
 ```
 ###### 新建usercenter.proto文件,添加如下内容
 ```bash
-syntax = "proto3";
-
-option go_package = "./pb";
-
-package pb;
-
-
-//model
-message User {
-  int64 id = 1;
-  string mobile = 2;
-  string nickname =3;
-  int64  sex = 4;
-  string avatar = 5;
-  string info = 6;
-}
-
-message UserAuth {
-  int64  id = 1;
-  int64  userId = 2;
-  string authType = 3;
-  string authKey = 4;
-}
-
-
-//req 、resp
-message RegisterReq {
-  string mobile = 1;
-  string nickname = 2;
-  string password = 3;
-  string authKey = 4;
-  string authType = 5;
-}
-message RegisterResp {
-  string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
-}
-
-message LoginReq {
-  string  authType = 1;
-  string authKey = 2;
-  string  password = 3;
-}
-message LoginResp {
-  string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
-}
-
-message GetUserInfoReq {
-  int64  id = 1;
-}
-message GetUserInfoResp {
-   User user = 1;
-}
-
-message GetUserAuthByAuthKeyReq {
-  string  authKey = 1;
-  string  authType = 2;
-}
-message GetUserAuthByAuthKeyResp {
-   UserAuth userAuth = 1;
-}
-
-message GetUserAuthByUserIdReq {
-  int64  userId = 1;
-  string  authType = 2;
-}
-message GetUserAuthyUserIdResp {
-   UserAuth userAuth = 1;
-}
-
-message GenerateTokenReq {
-  int64 userId = 1;
-}
-message GenerateTokenResp {
-  string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
-}
-
-//service
-service usercenter {
-  rpc login(LoginReq) returns(LoginResp);
-  rpc register(RegisterReq) returns(RegisterResp);
-  rpc getUserInfo(GetUserInfoReq) returns(GetUserInfoResp);
-  rpc getUserAuthByAuthKey(GetUserAuthByAuthKeyReq) returns(GetUserAuthByAuthKeyResp);
-  rpc getUserAuthByUserId(GetUserAuthByUserIdReq) returns(GetUserAuthyUserIdResp);
-  rpc generateToken(GenerateTokenReq) returns(GenerateTokenResp);
-}
-
+  # 详见下面文件
+  # go-zero-for-k8s/app/usercenter/cmd/rc/pb/usercenter.proto
 ```
 ###### 执行以下命令完善RPC服务
 ```bash
   goctl rpc protoc *.proto --go_out=../ --go-grpc_out=../  --zrpc_out=../ --style=goZero
 ```
 
-#### 1.4 初始化model
+#### 1.4 初始化Model
 
 ```bash
 
@@ -312,14 +136,23 @@ service usercenter {
 
 ## 三.部署实施
 
+#### 3.1 克隆项目到本地
+```bash
 
-#### 3.1 创建项目依赖环境专属网络命名空间
+  git clone https://github.com/utagithub/go-zero-for-k8s.git
+
+  cd go-zero-for-k8s
+
+  go mod tidy
+```
+
+#### 3.2 创建项目依赖环境专属网络命名空间
 ```bash
 
   docker network create go-zero-net
 ```
 
-#### 3.2 部署项目依赖环境 mysql,redis,nginx,elk等
+#### 3.3 部署项目依赖环境 mysql,redis,nginx,elk等
 ```bash
 
   docker-compose -f docker-compose-env.yml  up -d
@@ -327,7 +160,7 @@ service usercenter {
   docker-compose -f docker-compose-nginx.yml  up -d
 ```
 
-#### 3.3 设置Kafka
+#### 3.4 设置Kafka
 ###### 项目中是用来Kafka作为日志搜集的中间件需要先创建日志搜集的topic,
 ###### go-zero-log 这个topic是应用日志收集使用的
 ###### go-zero-nginx-log 这个topic是nginx日志收集使用的
@@ -349,7 +182,7 @@ service usercenter {
   # kafka-consumer-groups.sh --bootstrap-server kafka:9092 --list
 ```
 
-#### 3.4 导入mysql数据
+#### 3.5 导入mysql数据
 
 ###### 本地工具连接mysql的话要先进入容器,给root设置下远程连接权限
 
@@ -364,7 +197,7 @@ service usercenter {
 ###### 先创建数据库,然后还原数据表导入数据库:/go-zero-for-k8s/deploy/sql/goods.sql数据(项目数据表)
 
 
-#### 3.5 创建k8s集群命名空间和授权账户
+#### 3.6 创建k8s集群命名空间和授权账户
 ```bash
 
     # 先创建k8s集群命名空间
@@ -375,7 +208,7 @@ service usercenter {
 
 ```
 
-#### 3.6 部署usercenter-rpc usercenter-api 服务
+#### 3.7 部署usercenter-rpc usercenter-api 服务
 ```bash
 
     # 先部署 RPC 服务

@@ -11,7 +11,7 @@ Log:
   ServiceName: usercenter-rpc
   Level: info
   Mode: file
-  Path: logs
+  Path: ../../../../logs
 
 Redis:
   Host: 172.32.0.5:6379

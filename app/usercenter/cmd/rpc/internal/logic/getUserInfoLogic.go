@@ -5,6 +5,7 @@ import (
 	"go-zero-for-k8s/app/usercenter/cmd/rpc/usercenter"
 	"go-zero-for-k8s/app/usercenter/model"
 	"go-zero-for-k8s/common/xerr"
+	"os"
 
 	"go-zero-for-k8s/app/usercenter/cmd/rpc/internal/svc"
 	"go-zero-for-k8s/app/usercenter/cmd/rpc/pb"
@@ -41,7 +42,15 @@ func (l *GetUserInfoLogic) GetUserInfo(in *pb.GetUserInfoReq) (*pb.GetUserInfoRe
 		return nil, errors.Wrapf(ErrUserNoExistsError, "id:%d", in.Id)
 	}
 	var respUser usercenter.User
+
+	// 获取主机名并处理错误
+	hostName, err := os.Hostname()
+	if err != nil {
+		l.Logger.Errorf("get hostname error: %v", err)
+		hostName = "unknown-host"
+	}
 	_ = copier.Copy(&respUser, user)
+	respUser.Nickname = respUser.Nickname + "  rpc ---- > > " + hostName
 
 	return &usercenter.GetUserInfoResp{
 		User: &respUser,
